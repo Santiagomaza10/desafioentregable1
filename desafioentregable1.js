@@ -29,28 +29,31 @@ class ProductManager {
 
     async addProduct(product){
 
-    if ( ( this.products.some( p => p.id !== id) ) || this.products.length === 0 ) {
-            if ( !!product.title && !!product.description && !!product.price && !!product.code && !!product.thumbnail && !!product.stock ) {
-                try {
-                    const productsFile = await this.getProducts();
-                    this.#id++
-                    const productwid = {...product, id: this.#id}
-                    
-                    productsFile.push(productwid)
-                    await fs.promises.writeFile(this.path, JSON.stringify(productsFile))
-                } catch (error) {
-                    console.log(error)
+        if (( !!product.title &&
+            !!product.description &&
+            !!product.price &&
+            !!product.code &&
+            !!product.thumbnail && 
+            !!product.stock )) {
+            
+                if ( this.products.some( (p) => p.code !== product.code)) {
+                    try {
+                        const productsFile = await this.getProducts();
+                        this.#id++
+                        const productwid = {...product, id: this.#id}
+    
+                        productsFile.push(productwid)
+                        await fs.promises.writeFile(this.path, JSON.stringify(productsFile))
+                    } catch (error) {
+                        console.log(error)
+                    }
+                } else {
+                    console.log("El producto ya existe")
                 }
-
-
-                
-                
-            } else {
-                console.log("Todos los campos son obligatorios, por favor completar");
-            }
+                    
         } else {
-            console.log("El producto ya existe!");
-        }
+            console.log("Todos los campos son obligatorios, por favor completar")
+        }        
     }
 
 
