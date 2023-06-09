@@ -1,18 +1,50 @@
+const fs = require('fs')
 
 class ProductManager {
 
-    constructor () {
+    constructor (path) {
         this.products = [];
+        this.path = path
     }
 
+    
+
     #id = 0;
+    
+    async getProducts(){
+        try {
+            if (fs.existsSync(this.path)) {
+                const productsjson = await fs.promises.readFile(this.path, 'utf-8')
+                const products = JSON.parse(productsjson)
+                return products
+            } else {
+                return []
+            }
 
-    addProduct(title, description, price, thumbnail, code, stock){
+        } catch (error) {
+            console.log(error)
+        }
+        
+    }
 
-    if ( ( this.products.some( p => p.code !== code) ) || this.products.length === 0 ) {
-            if ( !!title && !!description && !!price && !!code && !!thumbnail && !!stock ) {
-                this.#id++
-                this.products.push( { id: this.#id, title, description, price, thumbnail, code, stock } )
+    async addProduct(product){
+
+    if ( ( this.products.some( p => p.id !== id) ) || this.products.length === 0 ) {
+            if ( !!product.title && !!product.description && !!product.price && !!product.code && !!product.thumbnail && !!product.stock ) {
+                try {
+                    const productsFile = await this.getProducts();
+                    this.#id++
+                    const productwid = {...product, id: this.#id}
+                    
+                    productsFile.push(productwid)
+                    await fs.promises.writeFile(this.path, JSON.stringify(productsFile))
+                } catch (error) {
+                    console.log(error)
+                }
+
+
+                
+                
             } else {
                 console.log("Todos los campos son obligatorios, por favor completar");
             }
@@ -21,9 +53,6 @@ class ProductManager {
         }
     }
 
-    getProducts(){
-        return this.products
-    }
 
 
     getProductById = (productId) => {
@@ -38,7 +67,40 @@ class ProductManager {
 }
 }
 
-const ejemplo = new ProductManager; // Instancia creada
+
+const ejemplo = new ProductManager('./products.json')
+
+const product1 = {
+    title : "producto de prueba",
+    description: "Este es un producto de prueba",
+    price: 200,
+    code: "abc123",
+    thumbnail: "Sin imagen",
+    stock: 25
+}
+
+const product2 = {
+    title : "producto de prueba 2",
+    description: "Este es otro producto de prueba",
+    price: 500,
+    thumbnail: "Sin imagen",
+    code: "abc1234567789",
+    stock: 50
+}
+
+const test = async () => {
+    const getProducts = await ejemplo.getProducts()
+    console.log('Primer consulta sin productos agregados => ',getProducts)
+    await ejemplo.addProduct(product1)
+    const getProductos2 = await ejemplo.getProducts()
+    console.log('2da consulta =>', getProductos2)
+    await ejemplo.addProduct(product1)
+    const getProductos3 = await ejemplo.getProducts()
+    console.log('3er consulta =>', getProductos3)
+}
+
+test()
+/* const ejemplo = new ProductManager; // Instancia creada
 
 console.log("PRUEBA DE ARRAY VACIO",ejemplo.getProducts()) // Array vacio
 
@@ -59,3 +121,4 @@ ejemplo.getProductById(1);  // Filtrando producto por id
 ejemplo.getProductById(3) // Filtrando producto con id inexistente
 
 
+ */
