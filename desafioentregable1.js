@@ -21,6 +21,18 @@ class ProductManager {
     }
   }
 
+  saveProducts() {
+    try {
+      fs.writeFileSync(this.path, JSON.stringify(this.products), "utf8");
+    } catch (error) {
+      console.log("Error al guardar en el archivo:", error.message);
+    }
+  }
+
+  getProducts() {
+    return this.products;
+  }
+
   async getProducts() {
     try {
       if (fs.existsSync(this.path)) {
@@ -60,6 +72,16 @@ class ProductManager {
     }
   }
 
+  deleteProduct(id) {
+    const index = this.products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      this.products.splice(index, 1);
+      this.saveProducts();
+    } else {
+      console.log("Error: Producto no encontrado.");
+    }
+  }
+
   getProductById = (productId) => {
     const prod = this.products.find((product) => product.id === productId);
     if (prod) {
@@ -69,7 +91,6 @@ class ProductManager {
       return "Product not found";
     }
   };
-
 }
 
 const manager = new ProductManager("./products.json");
@@ -94,19 +115,23 @@ const product2 = {
 
 const test = async () => {
   const getProducts = await manager.getProducts();
-  console.log("Primer consulta sin productos agregados => ", getProducts);
+  /* console.log("Primer consulta sin productos agregados => ", getProducts); */
 
-      await manager.addProduct(product1) //AGREGANDO PRODUCT1
-    console.log("Producto agregado")
+  await manager.addProduct(product1); //AGREGANDO PRODUCT1
+  /* onsole.log("Producto agregado") */
 
-    const getProductos2 = await manager.getProducts()
-    console.log('2da consulta con un producto agregado =>', getProductos2)
+  const getProductos2 = await manager.getProducts();
+  /* console.log('2da consulta con un producto agregado =>', getProductos2) */
 
-    await manager.addProduct(product2) //AGREGANDO PRODUCT2
-    console.log("2do producto agregado")
+  await manager.addProduct(product2); //AGREGANDO PRODUCT2
+  /* console.log("2do producto agregado") */
 
-    const getProductos3 = await manager.getProducts()
-    console.log('3er consulta con 2 productos agregados =>', getProductos3)
+  const getProductos3 = await manager.getProducts();
+  /* console.log('3er consulta con 2 productos agregados =>', getProductos3) */
+
+  manager.deleteProduct(1); // ELIMINANDO PRODUCTO 1
+
+  console.log(await manager.getProducts());
 
 };
 
