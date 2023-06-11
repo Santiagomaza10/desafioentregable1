@@ -29,10 +29,6 @@ class ProductManager {
     }
   }
 
-  getProducts() {
-    return this.products;
-  }
-
   async getProducts() {
     try {
       if (fs.existsSync(this.path)) {
