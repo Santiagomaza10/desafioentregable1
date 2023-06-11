@@ -60,7 +60,7 @@ class ProductManager {
           const productwid = { ...product, id: this.#id };
 
           productsFile.push(productwid);
-          await fs.promises.writeFile(this.path, JSON.stringify(productsFile));
+          await this.saveProducts();
         } catch (error) {
           console.log(error);
         }
