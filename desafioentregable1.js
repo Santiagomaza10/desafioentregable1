@@ -1,70 +1,87 @@
-const fs = require("fs");
+const fs = require('fs');
+const path = require('path');
 
 class ProductManager {
-  constructor(path) {
+  constructor(filePath) {
+    this.path = filePath;
     this.products = [];
-    this.path = path;
+    this.nextId = 1;
+    this.loadProducts();
   }
 
-  #id = 0;
-
-  #requiredFields(product) {
-    if (
-      !!product.title &&
-      !!product.description &&
-      !!product.price &&
-      !!product.code &&
-      !!product.thumbnail &&
-      !!product.stock
-    ) {
-      return true;
+  loadProducts() {
+    try {
+      const data = fs.readFileSync(this.path, 'utf8');
+      if (data) {
+        this.products = JSON.parse(data);
+        const lastProduct = this.products[this.products.length - 1];
+        this.nextId = lastProduct ? lastProduct.id + 1 : 1;
+      }
+    } catch (error) {
+      console.log('Error al leer el archivo:', error.message);
     }
   }
 
   saveProducts() {
     try {
-      fs.writeFileSync(this.path, JSON.stringify(this.products), "utf8");
+      fs.writeFileSync(this.path, JSON.stringify(this.products), 'utf8');
     } catch (error) {
-      console.log("Error al guardar en el archivo:", error.message);
+      console.log('Error al guardar en el archivo:', error.message);
     }
   }
 
-  async getProducts() {
-    try {
-      if (fs.existsSync(this.path)) {
-        const productsjson = await fs.promises.readFile(this.path, "utf-8");
-        const products = JSON.parse(productsjson);
-        return (this.products = products);
-      } else {
-        return [];
-      }
-    } catch (error) {
-      console.log(error);
+  addProduct(product) {
+    if (!product.title || !product.description || !product.price || !product.thumbnail || !product.code || !product.stock) {
+      console.log('Error: Todos los campos son obligatorios.');
+      return;
     }
+
+    if (this.isCodeDuplicate(product.code)) {
+      console.log('Error: El código ya está en uso.');
+      return;
+    }
+
+    const newProduct = {
+      id: this.nextId,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      thumbnail: product.thumbnail,
+      code: product.code,
+      stock: product.stock,
+    };
+
+    this.products.push(newProduct);
+    this.nextId++;
+    this.saveProducts();
   }
 
-  async addProduct(product) {
-    if (this.#requiredFields(product)) {
-      if (
-        !this.products.some(
-          (p) => p.code === product.code || this.products.length == 0
-        )
-      ) {
-        this.#id++;
-        try {
-          const productsFile = await this.getProducts();
-          const productwid = { ...product, id: this.#id };
+  isCodeDuplicate(code) {
+    return this.products.some((product) => product.code === code);
+  }
 
-          productsFile.push(productwid);
-          await this.saveProducts();
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        console.log("El producto ya existe");
-      }
+  getProducts() {
+    return this.products;
+  }
+
+  getProductById(id) {
+    const product = this.products.find((product) => product.id === id);
+    if (product) {
+      return product;
     } else {
-      console.log("Todos los campos son obligatorios, por favor completar");
+      console.log('Error: Producto no encontrado.');
+      return null;
+    }
+  }
+
+  updateProduct(id, updatedFields) {
+    const index = this.products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      const updatedProduct = { ...this.products[index], ...updatedFields };
+      this.products[index] = updatedProduct;
+      this.saveProducts();
+    } else {
+      console.log('Error: Producto no encontrado.');
     }
   }
 
@@ -74,64 +91,46 @@ class ProductManager {
       this.products.splice(index, 1);
       this.saveProducts();
     } else {
-      console.log("Error: Producto no encontrado.");
+      console.log('Error: Producto no encontrado.');
     }
   }
-
-  getProductById = (productId) => {
-    const prod = this.products.find((product) => product.id === productId);
-    if (prod) {
-      return prod;
-    } else {
-      console.log("Product not found");
-      return "Product not found";
-    }
-  };
 }
 
-const manager = new ProductManager("./products.json");
+const filePath = path.join('./productos.json');
+const manager = new ProductManager(filePath);
 
-const product1 = {
-  title: "producto de prueba",
-  description: "Este es un producto de prueba",
+manager.addProduct({
+  title: 'producto prueba',
+  description: 'este es un producto de prueba',
   price: 200,
-  code: "abc123",
-  thumbnail: "Sin imagen",
+  thumbnail: 'sin  imagen',
+  code: 'abc123',
   stock: 25,
-};
-
-const product2 = {
-  title: "producto de prueba 2",
-  description: "Este es otro producto de prueba",
+});
+manager.addProduct({
+  title: 'producto prueba2',
+  description: 'este es otro de prueba',
   price: 500,
-  thumbnail: "Sin imagen",
-  code: "abc1234567789",
+  thumbnail: 'sin imagen',
+  code: 'abc123123',
   stock: 50,
-};
+});
 
-const test = async () => {
-  const getProducts = await manager.getProducts();
-  /* console.log("Primer consulta sin productos agregados => ", getProducts); */
 
-  await manager.addProduct(product1); //AGREGANDO PRODUCT1
-  /* onsole.log("Producto agregado") */
+console.log(manager.getProducts());
 
-  const getProductos2 = await manager.getProducts();
-  /* console.log('2da consulta con un producto agregado =>', getProductos2) */
+console.log(manager.getProductById(2));
 
-  await manager.addProduct(product2); //AGREGANDO PRODUCT2
-  /* console.log("2do producto agregado") */
+console.log(manager.getProductById(4));
 
-  const getProductos3 = await manager.getProducts();
-  /* console.log('3er consulta con 2 productos agregados =>', getProductos3) */
+// Actualizar un producto
+manager.updateProduct(2, { price: 1000, stock: 100 });
 
-  manager.deleteProduct(1); // ELIMINANDO PRODUCTO 1
+// Eliminar un producto
+manager.deleteProduct(4);
 
-  console.log(await manager.getProducts());
+console.log(manager.getProducts());
 
-};
-
-test();
 
 /* const ejemplo = new ProductManager; // Instancia creada
 
